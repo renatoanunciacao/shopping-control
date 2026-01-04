@@ -13,7 +13,7 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class PlanService {
-    
+
     private final PlanRepository planRepository;
     private final UserRepository userRepository;
 
@@ -33,15 +33,16 @@ public class PlanService {
                 .orElseThrow(() -> new IllegalStateException("FREE plan not found"));
 
         // Lógica para atribuir o plano FREE aos usuários sem plano
-        // Isso pode envolver a injeção de um UserRepository e a atualização dos usuários
+        // Isso pode envolver a injeção de um UserRepository e a atualização dos
+        // usuários
         List<User> usersWithoutPlan = userRepository.findAll()
-        .stream()
-        .filter(user -> user.getPlans().isEmpty()).toList();
+                .stream()
+                .filter(user -> user.getPlans().isEmpty()).toList();
 
         for (User user : usersWithoutPlan) {
             user.getPlans().add(freePlan);
             userRepository.save(user);
-        }   
+        }
     }
 
     @Transactional
@@ -50,5 +51,11 @@ public class PlanService {
                 .orElseThrow(() -> new RuntimeException("FREE plan not found"));
     }
 
-    
+    public boolean hasPlan(String email, String planName) {
+        User user = userRepository.findByEmail(email).orElseThrow();
+
+        return user.getPlans().stream()
+                .anyMatch(plan -> plan.getName().equals(planName));
+    }
+
 }

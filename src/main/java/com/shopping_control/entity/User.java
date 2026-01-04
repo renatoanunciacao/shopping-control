@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.shopping_control.entity.enums.AuthProvider;
+import com.shopping_control.entity.enums.Role;
 
 import jakarta.persistence.*;
 
@@ -37,7 +38,11 @@ public class User {
     @Column(nullable = false)
     private AuthProvider provider;
 
-    // Construtor vazio obrigatório para JPA
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
+   
     protected User() {
     }
 
@@ -101,6 +106,14 @@ public class User {
 
     public void setProvider(AuthProvider provider) {
         this.provider = provider;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 
 }

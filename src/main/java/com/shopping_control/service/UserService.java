@@ -7,6 +7,7 @@ import com.shopping_control.dto.CreateUserRequest;
 import com.shopping_control.dto.GoogleUserInfo;
 import com.shopping_control.entity.User;
 import com.shopping_control.entity.enums.AuthProvider;
+import com.shopping_control.entity.enums.Role;
 import com.shopping_control.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
@@ -37,6 +38,7 @@ public class UserService {
                 AuthProvider.LOCAL);
 
         user.getPlans().add(planService.getFreePlan());
+        user.setRole(Role.ROLE_USER);
 
         return userRepository.save(user);
     }

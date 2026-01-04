@@ -3,7 +3,10 @@ package com.shopping_control.service;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.stereotype.Component;
 
@@ -18,7 +21,7 @@ import io.jsonwebtoken.security.Keys;
 public class JwtService {
 
     private static final String SECRET_KEY = "minha-chave-super-secreta-com-mais-de-32-bytes";
-    private static final long EXPIRATION_TIME = 5000;
+    private static final long EXPIRATION_TIME = 1800000; // 30 minutos em milissegundos
     private final Key secretKey;
 
     public JwtService() {
@@ -26,7 +29,10 @@ public class JwtService {
     }
 
     public Date getExpirationDate() {
-        return new Date(System.currentTimeMillis() + EXPIRATION_TIME);
+        // Usa UTC para evitar problemas de timezone
+        Instant now = Instant.now();
+        Instant expiration = now.plusMillis(EXPIRATION_TIME);
+        return Date.from(expiration);
     }
 
     private Claims extractClaims(String token) {
@@ -38,25 +44,41 @@ public class JwtService {
     }
 
     public String generateToken(User user) {
-       Date now = new Date();
-    Date expiration = getExpirationDate();
+        Instant now = Instant.now();
+        Date issuedAt = Date.from(now);
+        Date expiration = getExpirationDate();
 
-    return Jwts.builder()
-            .setSubject(user.getEmail())
-            .claim("userId", user.getId())
-            .claim("provider", user.getProvider().name())
-            .claim("plans", user.getPlans()
-                    .stream()
-                    .map(Plan::getName)
-                    .toList())
-            .setIssuedAt(now)
-            .setExpiration(expiration)
-            .signWith(secretKey)
-            .compact();
+        return Jwts.builder()
+                .setSubject(user.getEmail())
+                .claim("userId", user.getId())
+                .claim("provider", user.getProvider().name())
+                .claim("roles", List.of(user.getRole().name()))
+                .claim("plans", user.getPlans()
+                        .stream()
+                        .map(Plan::getName)
+                        .toList())
+                .setIssuedAt(issuedAt)
+                .setExpiration(expiration)
+                .signWith(secretKey)
+                .compact();
     }
 
     public String extractUsername(String token) {
         return extractClaims(token).getSubject();
+    }
+
+    public List<String> extractRoles(String token) {
+        Claims claims = extractClaims(token);
+
+        Object rolesObject = claims.get("roles");
+
+        if (rolesObject == null) {
+            return List.of();
+        }
+
+        return ((List<?>) rolesObject).stream()
+                .map(Object::toString)
+                .toList();
     }
 
     public boolean isTokenValid(String token) {
